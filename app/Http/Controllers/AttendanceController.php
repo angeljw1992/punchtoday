@@ -68,7 +68,8 @@ public function fetchAttendanceData($request, $pdfData = false)
         'Modified_TimeStamp',
         'Modified_User_Id'
     ])
-    ->join('EmployeeList', 'EmployeeList.EmployeeID', '=', 'POSTLD_CLCK.EmployeeID');
+    ->join('EmployeeList', 'EmployeeList.EmployeeID', '=', 'POSTLD_CLCK.EmployeeID')
+    ->orderBy('BusinessDate', 'asc');  // Ordenar por fecha descendente
 
     if ($request->filled('from')) {
         $query->whereDate('BusinessDate', '>=', $request->from);
@@ -327,6 +328,32 @@ public function excuseStore(Request $request)
     return redirect()->route('admin.attendance.index')->with('success', 'Excusa añadida con éxito.');
 }
 
+
+public function getAvailableEmployees($date)
+{
+    $employeesWithAttendance = POSTLD_CLCK::whereDate('BusinessDate', $date)
+                                          ->pluck('EmployeeID')
+                                          ->toArray();
+
+    $employeesWithExcuses = EmployeeAbsenseExcuse::whereDate('date', $date)
+                                                 ->pluck('employee_id')
+                                                 ->toArray();
+
+    $excludedEmployeeIds = array_merge($employeesWithAttendance, $employeesWithExcuses);
+
+    $employees = EmployeeList::where('status', 65)
+                             ->whereNotIn('EmployeeID', $excludedEmployeeIds)
+                             ->select('EmployeeID', 'FullName')
+                             ->get()
+                             ->map(function($employee) {
+                                 return [
+                                     'id' => $employee->EmployeeID,
+                                     'name' => $employee->FullName
+                                 ];
+                             });
+
+    return response()->json($employees);
+}
 
 
 }

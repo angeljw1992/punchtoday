@@ -22,6 +22,8 @@ Route::post('/empleados/{empleado}/destroy', [EmpleadosController::class, 'destr
 
 Route::resource('empleados', EmpleadoController::class);
 Route::get('empleados/{id}', [EmpleadoController::class, 'show'])->name('empleados.show');
+Route::get('admin/attendance/employees-available/{date}', [AttendanceController::class, 'getAvailableEmployees']);
+
 
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'middleware' => ['auth']], function () {
